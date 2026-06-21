@@ -25,7 +25,7 @@ public class StatusNotifierWatcher : Object {
         registered_hosts = new Gee.ArrayList<string>();
     }
     
-    public async bool register_on_bus() {
+    public async bool register_on_bus() throws DBusError, IOError {
         try {
             connection = yield Bus.get(BusType.SESSION);
             try {
