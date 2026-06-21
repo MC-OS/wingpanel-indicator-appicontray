@@ -14,7 +14,7 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
         Object(
             code_name: "appicontray-indicator"
         );
-        visible = false;
+        this.visible = false;
     }
 
     construct {
@@ -26,13 +26,18 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
         // Register D-Bus watcher, print only result of registration
         watcher = new StatusNotifierWatcher();
         watcher.register_on_bus.begin((obj, res) => {
-            bool registered = watcher.register_on_bus.end(res);
-            if (registered) {
-                debug("StatusNotifierWatcher service registered");
-            } else {
-                debug("Using existing StatusNotifierWatcher service");
+            try {
+                bool registered = watcher.register_on_bus.end(res);
+                if (registered) {
+                    debug("StatusNotifierWatcher service registered");
+                } else {
+                    debug("Using existing StatusNotifierWatcher service");
+                }
+                initialize_host();
+            } catch (GLib.Error e) {
+                // Handle the failure to register
+                warning("Failed to register StatusNotifierWatcher: %s", e.message);
             }
-            initialize_host();
         });
     }
 
@@ -58,7 +63,7 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
         }
         display_widget.pack_start(icon, false, false, 0);
         icon.show_all();
-        visible = true;
+        this.visible = true;
     }
 
     private void on_icon_removed(TrayIcon icon) {
@@ -69,7 +74,7 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
         display_widget.remove(icon);
         GLib.List<weak Gtk.Widget> children = display_widget.get_children();
         if (children.length() == 0) {
-            visible = false;
+            this.visible = false;
         }
     }
 }
