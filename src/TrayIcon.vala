@@ -19,6 +19,7 @@ public class TrayIcon : Gtk.EventBox {
 
     public signal void ready();
     public signal void removed();
+    public signal void clicked();
 
     public TrayIcon(string service_name, string bus_name, string object_path) {
         this.service_name = service_name;
@@ -26,8 +27,8 @@ public class TrayIcon : Gtk.EventBox {
         this.object_path = object_path;
 
         icon_image = new Gtk.Image();
-        icon_image.pixel_size = 16;
-        icon_image.margin = 6;
+        icon_image.pixel_size = 20;
+        icon_image.margin = 12;
         add(icon_image);
 
         set_visible_window(false);
@@ -251,7 +252,7 @@ public class TrayIcon : Gtk.EventBox {
         IconPixmapStruct[]? pixmaps = needs_attention ? get_attention_icon_pixmap() : get_icon_pixmap();
         if (pixmaps != null && pixmaps.length > 0 && load_icon_from_pixmap(pixmaps)) return;
         icon_image.set_from_icon_name("application-x-executable", Gtk.IconSize.SMALL_TOOLBAR);
-        icon_image.pixel_size = 16;
+        icon_image.pixel_size = 20;
     }
 
     private bool load_icon_from_path(string base_path, string icon_name) {
@@ -276,7 +277,7 @@ public class TrayIcon : Gtk.EventBox {
         int best_idx = 0;
         int best_diff = int.MAX;
         for (int i = 0; i < pixmaps.length; i++) {
-            int size_diff = (pixmaps[i].width - 16).abs() + (pixmaps[i].height - 16).abs();
+            int size_diff = (pixmaps[i].width - 20).abs() + (pixmaps[i].height - 20).abs();
             if (size_diff < best_diff) {
                 best_diff = size_diff;
                 best_idx = i;
@@ -306,8 +307,8 @@ public class TrayIcon : Gtk.EventBox {
             Gdk.Colorspace.RGB,
             true, 8, width, height, width * 4
         );
-        if (width != 16 || height != 16)
-            pixbuf = pixbuf.scale_simple(16, 16, Gdk.InterpType.BILINEAR);
+        if (width != 20 || height != 20)
+            pixbuf = pixbuf.scale_simple(20, 20, Gdk.InterpType.BILINEAR);
         icon_image.set_from_pixbuf(pixbuf);
         return true;
     }
@@ -337,6 +338,7 @@ public class TrayIcon : Gtk.EventBox {
                 freedesktop_proxy.Activate.begin(x, y);
             else if (item_proxy != null)
                 item_proxy.Activate.begin(x, y);
+            this.clicked();
         } else if (event.button == Gdk.BUTTON_SECONDARY) {
             if (dbusmenu != null)
                 dbusmenu.popup_at_pointer(event);

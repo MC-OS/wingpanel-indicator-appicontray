@@ -6,7 +6,8 @@
  */
 
 public class AppicontrayIndicator : Wingpanel.Indicator {
-    private Gtk.Box? display_widget = null;
+    private Gtk.Grid? display_widget = null;
+    private Gtk.Image? display_icon = null;
     private StatusNotifierHost host;
     private StatusNotifierWatcher? watcher;
 
@@ -14,14 +15,20 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
         Object(
             code_name: "appicontray-indicator"
         );
-        this.visible = false;
+        this.visible = true;
     }
 
     construct {
         // Construction and display container
         debug("Constructing AppIconTray Indicator");
-        display_widget = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-        display_widget.get_style_context().add_class("appicontray");
+        display_icon = new Gtk.Image.from_icon_name("pan-down-symbolic", Gtk.IconSize.MENU);
+        display_icon.set_pixel_size(16);
+        display_icon.get_style_context().add_class("appicontray-indicator-icon");
+        display_icon.set_tooltip_text(_("Other App Indicator Icons"));
+
+
+        display_widget = new Gtk.Grid();
+        display_widget.get_style_context().add_class("appicontray-indicator");
 
         // Register D-Bus watcher, print only result of registration
         watcher = new StatusNotifierWatcher();
@@ -50,18 +57,24 @@ public class AppicontrayIndicator : Wingpanel.Indicator {
     }
 
     public override Gtk.Widget get_display_widget() {
-        return display_widget;
+        // Now return the icon instead of null
+        return display_icon;
     }
-    public override Gtk.Widget? get_widget() { return null; }
-    public override void opened() {}
-    public override void closed() {}
+    public override Gtk.Widget? get_widget() { return display_widget; }
+    public override void opened() {display_icon.set_from_icon_name("pan-up-symbolic", Gtk.IconSize.MENU);}
+    public override void closed() {display_icon.set_from_icon_name("pan-down-symbolic", Gtk.IconSize.MENU);}
 
     private void on_icon_added(TrayIcon icon) {
         if (display_widget == null) {
             critical("display_widget is null in on_icon_added!");
             return;
         }
-        display_widget.pack_start(icon, false, false, 0);
+
+        icon.clicked.connect(() => {
+            close();
+        });
+
+        display_widget.add(icon);
         icon.show_all();
         this.visible = true;
     }
