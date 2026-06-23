@@ -334,27 +334,55 @@ public class TrayIcon : Gtk.EventBox {
         int x = (int)event.x_root;
         int y = (int)event.y_root;
         if (event.button == Gdk.BUTTON_PRIMARY) {
-            if (use_freedesktop_interface && freedesktop_proxy != null)
-                freedesktop_proxy.Activate.begin(x, y);
-            else if (item_proxy != null)
-                item_proxy.Activate.begin(x, y);
-            this.clicked();
-        } else if (event.button == Gdk.BUTTON_SECONDARY) {
-            if (dbusmenu != null)
-                dbusmenu.popup_at_pointer(event);
-            else {
-                if (use_freedesktop_interface && freedesktop_proxy != null)
-                    freedesktop_proxy.ContextMenu.begin(x, y);
-                else if (item_proxy != null)
-                    item_proxy.ContextMenu.begin(x, y);
+            if (use_freedesktop_interface && freedesktop_proxy != null) {
+                freedesktop_proxy.Activate.begin(x, y, (obj, res) => {
+                    try {
+                        freedesktop_proxy.Activate.end(res);
+                        this.clicked();
+                    } catch (GLib.Error e) {
+                        if (dbusmenu != null) {
+                            dbusmenu.popup_at_pointer(event);
+                        } else {
+                            freedesktop_proxy.ContextMenu.begin(x, y);
+                        }
+                    }
+                });
+            } else if (item_proxy != null) {
+                item_proxy.Activate.begin(x, y, (obj, res) => {
+                    try {
+                        item_proxy.Activate.end(res);
+                        this.clicked();
+                    } catch (GLib.Error e) {
+                        if (dbusmenu != null) {
+                            dbusmenu.popup_at_pointer(event);
+                        } else {
+                            item_proxy.ContextMenu.begin(x, y);
+                        }
+                    }
+                });
             }
-        } else if (event.button == Gdk.BUTTON_MIDDLE) {
-            if (use_freedesktop_interface && freedesktop_proxy != null)
+        } else if (event.button == Gdk.BUTTON_SECONDARY) {
+            if (dbusmenu != null) {
+                dbusmenu.popup_at_pointer(event);
+            } else {
+                // Manual fallback if no dbusmenu is provided
+                if (use_freedesktop_interface && freedesktop_proxy != null) {
+                    freedesktop_proxy.ContextMenu.begin(x, y);
+                } else if (item_proxy != null) {
+                    item_proxy.ContextMenu.begin(x, y);
+                }
+            }
+        } 
+
+        else if (event.button == Gdk.BUTTON_MIDDLE) {
+            if (use_freedesktop_interface && freedesktop_proxy != null) {
                 freedesktop_proxy.SecondaryActivate.begin(x, y);
-            else if (item_proxy != null)
+            } else if (item_proxy != null) {
                 item_proxy.SecondaryActivate.begin(x, y);
+            }
         }
-        return true;
+
+        return false;
     }
 
     private bool on_scroll(Gdk.EventScroll event) {
