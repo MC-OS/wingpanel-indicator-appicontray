@@ -15,6 +15,7 @@ public class TrayIcon : Gtk.EventBox {
     private DbusmenuGtk.Menu? dbusmenu;
     private bool is_ready = false;
     private bool use_freedesktop_interface = false;
+    private const int icon_size = 32;
     private DBusConnection? connection;
 
     public signal void ready();
@@ -27,7 +28,7 @@ public class TrayIcon : Gtk.EventBox {
         this.object_path = object_path;
 
         icon_image = new Gtk.Image();
-        icon_image.pixel_size = 20;
+        icon_image.pixel_size = icon_size;
         icon_image.margin = 12;
         add(icon_image);
 
@@ -237,13 +238,13 @@ public class TrayIcon : Gtk.EventBox {
             }
             var icon_theme = Gtk.IconTheme.get_default();
             if (icon_theme.has_icon(icon_name)) {
-                icon_image.set_from_icon_name(icon_name, Gtk.IconSize.SMALL_TOOLBAR);
-                icon_image.pixel_size = 16;
+                icon_image.set_from_icon_name(icon_name, Gtk.IconSize.LARGE_TOOLBAR);
+                icon_image.pixel_size = icon_size;
                 return;
             }
             if (icon_name.has_prefix("/") && FileUtils.test(icon_name, FileTest.EXISTS)) {
                 try {
-                    var pixbuf = new Gdk.Pixbuf.from_file_at_scale(icon_name, 16, 16, true);
+                    var pixbuf = new Gdk.Pixbuf.from_file_at_scale(icon_name, icon_size, icon_size, true);
                     icon_image.set_from_pixbuf(pixbuf);
                     return;
                 } catch (Error e) { debug("Error loading icon from file: %s", e.message); }
@@ -251,19 +252,19 @@ public class TrayIcon : Gtk.EventBox {
         }
         IconPixmapStruct[]? pixmaps = needs_attention ? get_attention_icon_pixmap() : get_icon_pixmap();
         if (pixmaps != null && pixmaps.length > 0 && load_icon_from_pixmap(pixmaps)) return;
-        icon_image.set_from_icon_name("application-x-executable", Gtk.IconSize.SMALL_TOOLBAR);
-        icon_image.pixel_size = 20;
+        icon_image.set_from_icon_name("application-x-executable", Gtk.IconSize.LARGE_TOOLBAR);
+        icon_image.pixel_size = icon_size;
     }
 
     private bool load_icon_from_path(string base_path, string icon_name) {
         string[] extensions = { ".svg", ".png", ".xpm", "" };
-        string[] size_variants = { "", "/16x16", "/scalable", "/hicolor/16x16/apps", "/hicolor/scalable/apps" };
+        string[] size_variants = { "", "/32x32", "/scalable", "/hicolor/32x32/apps", "/hicolor/scalable/apps" };
         foreach (var size_dir in size_variants) {
             foreach (var ext in extensions) {
                 string icon_file = Path.build_filename(base_path + size_dir, icon_name + ext);
                 if (FileUtils.test(icon_file, FileTest.EXISTS)) {
                     try {
-                        var pixbuf = new Gdk.Pixbuf.from_file_at_scale(icon_file, 16, 16, true);
+                        var pixbuf = new Gdk.Pixbuf.from_file_at_scale(icon_file, icon_size, icon_size, true);
                         icon_image.set_from_pixbuf(pixbuf);
                         return true;
                     } catch (Error e) { debug("Error loading icon from file: %s", e.message); }
@@ -277,7 +278,7 @@ public class TrayIcon : Gtk.EventBox {
         int best_idx = 0;
         int best_diff = int.MAX;
         for (int i = 0; i < pixmaps.length; i++) {
-            int size_diff = (pixmaps[i].width - 20).abs() + (pixmaps[i].height - 20).abs();
+            int size_diff = (pixmaps[i].width - icon_size).abs() + (pixmaps[i].height - icon_size).abs();
             if (size_diff < best_diff) {
                 best_diff = size_diff;
                 best_idx = i;
@@ -307,8 +308,8 @@ public class TrayIcon : Gtk.EventBox {
             Gdk.Colorspace.RGB,
             true, 8, width, height, width * 4
         );
-        if (width != 20 || height != 20)
-            pixbuf = pixbuf.scale_simple(20, 20, Gdk.InterpType.BILINEAR);
+        if (width != icon_size || height != icon_size)
+            pixbuf = pixbuf.scale_simple(icon_size, icon_size, Gdk.InterpType.BILINEAR);
         icon_image.set_from_pixbuf(pixbuf);
         return true;
     }
