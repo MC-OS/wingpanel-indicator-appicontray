@@ -15,7 +15,7 @@ public class TrayIcon : Gtk.EventBox {
     private DbusmenuGtk.Menu? dbusmenu;
     private bool is_ready = false;
     private bool use_freedesktop_interface = false;
-    private const int icon_size = 32;
+    private const int icon_size = 24;
     private DBusConnection? connection;
 
     public signal void ready();
